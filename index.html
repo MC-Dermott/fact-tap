@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fact Tap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+  :root {
+    --paper: #f5f8fd;
+    --grid: rgba(36, 86, 214, 0.09);
+    --ink: #14213d;
+    --ink-soft: #4d5b7c;
+    --tile: #ffffff;
+    --edge: #14213d;
+    --line: #c8d2e6;
+    --blue: #2456d6;
+    --blue-ink: #ffffff;
+    --marker: #ffc93c;
+    --marker-ink: #14213d;
+    --good: #1c9651;
+    --good-soft: #d7f3e2;
+    --bad: #d23f3f;
+    --bad-soft: #fbdede;
+    --display: "Bricolage Grotesque", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Atkinson Hyperlegible", "Verdana", "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #111925;
+      --grid: rgba(140, 170, 230, 0.07);
+      --ink: #e9eefa;
+      --ink-soft: #a2b1cf;
+      --tile: #1b2536;
+      --edge: #03060b;
+      --line: #2c3a53;
+      --blue: #6d95ff;
+      --blue-ink: #0b1326;
+      --marker: #ffcf4d;
+      --marker-ink: #14213d;
+      --good: #3fcf7e;
+      --good-soft: #143826;
+      --bad: #ff6f6f;
+      --bad-soft: #3d1c20;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #111925;
+    --grid: rgba(140, 170, 230, 0.07);
+    --ink: #e9eefa;
+    --ink-soft: #a2b1cf;
+    --tile: #1b2536;
+    --edge: #03060b;
+    --line: #2c3a53;
+    --blue: #6d95ff;
+    --blue-ink: #0b1326;
+    --marker: #ffcf4d;
+    --marker-ink: #14213d;
+    --good: #3fcf7e;
+    --good-soft: #143826;
+    --bad: #ff6f6f;
+    --bad-soft: #3d1c20;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 26px 26px;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    padding-inline: 16px;
+    padding-block: 20px 40px;
+    box-sizing: border-box;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+  .wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+  /* ---------- Header ---------- */
+  .masthead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 46px; height: 46px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center;
+    background: var(--marker); color: var(--marker-ink); border: 2px solid var(--edge);
+    box-shadow: 0 4px 0 var(--edge); font-family: var(--display); font-weight: 800; font-size: 22px;
+  }
+  .brand h1 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: -0.02em; line-height: 1; }
+  .brand p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; }
+  .icon-btn {
+    border: 2px solid var(--line); background: var(--tile); border-radius: 999px; padding: 6px 14px;
+    font-size: 14px; font-weight: 700; cursor: pointer; color: var(--ink-soft);
+  }
+  .icon-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+  /* ---------- Setup ---------- */
+  .label {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+  .packs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .pack {
+    text-align: left; cursor: pointer; background: var(--tile); border: 2px solid var(--edge); border-radius: 16px;
+    padding: 14px 16px 16px; box-shadow: 0 4px 0 var(--edge); display: flex; flex-direction: column; gap: 6px;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .pack:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--edge); }
+  .pack[aria-pressed="true"] { background: var(--marker); color: var(--marker-ink); }
+  .pack[aria-pressed="true"] .pack-blurb { color: var(--marker-ink); opacity: .8; }
+  .pack-eg { font-family: var(--body); font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .pack-name { font-family: var(--display); font-weight: 700; font-size: 19px; line-height: 1.15; text-wrap: balance; }
+  .pack-blurb { font-size: 14px; color: var(--ink-soft); }
+
+  .panel {
+    background: var(--tile); border: 2px solid var(--line); border-radius: 18px; padding: 20px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 2px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 14px;
+    cursor: pointer; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .chip small { font-weight: 400; color: var(--ink-soft); font-size: 13px; }
+  .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
+  .chip[aria-pressed="true"] small { color: var(--blue-ink); opacity: .85; }
+  .chip:hover:not([aria-pressed="true"]) { border-color: var(--ink-soft); }
+  .row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .link { background: none; border: 0; padding: 0; color: var(--blue); font-weight: 700; font-size: 13px; cursor: pointer; }
+
+  .start-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  .big-btn {
+    font-family: var(--display); font-weight: 800; font-size: 24px; letter-spacing: -0.01em;
+    background: var(--good); color: #fff; border: 2px solid var(--edge); border-radius: 16px;
+    padding: 14px 34px; box-shadow: 0 5px 0 var(--edge); cursor: pointer;
+  }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); }
+  .big-btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: 0 5px 0 var(--edge); }
+  .ghost-btn {
+    font-weight: 700; font-size: 16px; background: var(--tile); border: 2px solid var(--edge); border-radius: 14px;
+    padding: 12px 22px; box-shadow: 0 4px 0 var(--edge); cursor: pointer;
+  }
+  .ghost-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+  .hint { color: var(--ink-soft); font-size: 14px; }
+  .hint strong { color: var(--ink); }
+  .warn { color: var(--bad); font-weight: 700; font-size: 14px; }
+
+  /* ---------- Fractions ---------- */
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.05; font-size: .82em; }
+  .frac .num { border-bottom: 0.09em solid currentColor; padding: 0 .18em .04em; }
+  .frac .den { padding: .04em .18em 0; }
+  .gap {
+    display: inline-block; min-width: 1.4em; border: 0.08em dashed currentColor; border-radius: .2em;
+    padding: 0 .15em; color: var(--blue); text-align: center; line-height: 1.1;
+  }
+  sup { font-size: .55em; }
+
+  /* ---------- Game ---------- */
+  .hud { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hud .spacer { flex: 1; }
+  .stat {
+    display: flex; flex-direction: column; align-items: center; min-width: 88px; padding: 6px 14px;
+    background: var(--tile); border: 2px solid var(--edge); border-radius: 12px; box-shadow: 0 3px 0 var(--edge);
+  }
+  .stat b { font-family: var(--display); font-weight: 800; font-size: 28px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); }
+  .stat.timer.low b { color: var(--bad); }
+  .timebar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .timebar i { display: block; height: 100%; width: 100%; background: var(--blue); border-radius: inherit; transform-origin: left; }
+  .timebar.low i { background: var(--bad); }
+
+  .question {
+    background: var(--tile); border: 2px solid var(--edge); border-radius: 22px; box-shadow: 0 6px 0 var(--edge);
+    padding: 18px 20px 24px; text-align: center; position: relative;
+  }
+  .ask {
+    display: inline-block; background: var(--marker); color: var(--marker-ink); font-weight: 700; font-size: 15px;
+    padding: 4px 12px; border-radius: 8px; letter-spacing: .01em;
+  }
+  .prompt {
+    font-family: var(--body); font-weight: 700; font-size: clamp(48px, 11vw, 92px); line-height: 1.15;
+    margin-top: 10px; min-height: 1.3em; display: flex; align-items: center; justify-content: center; gap: .15em;
+    font-variant-numeric: tabular-nums;
+  }
+  .streak { position: absolute; top: 14px; right: 16px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .streak[data-hot="true"] { color: var(--good); }
+
+  .answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .ans {
+    background: var(--tile); border: 2px solid var(--edge); border-radius: 16px; box-shadow: 0 5px 0 var(--edge);
+    min-height: 86px; font-weight: 700; font-size: clamp(24px, 4.2vw, 34px); cursor: pointer; padding: 6px;
+    display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;
+    transition: background-color .12s ease, transform .06s ease, box-shadow .06s ease;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .ans:hover:not(:disabled) { background: color-mix(in srgb, var(--marker) 22%, var(--tile)); }
+  .ans:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); }
+  .ans.right { background: var(--good); color: #fff; }
+  .ans.wrong { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); box-shadow: 0 5px 0 var(--bad); cursor: default; opacity: .8; }
+  .ans.wrong.shake { animation: shake .32s ease; }
+  @keyframes shake { 20% { transform: translateX(-6px); } 45% { transform: translateX(6px); } 70% { transform: translateX(-3px); } 100% { transform: none; } }
+  .pop { animation: pop .22s ease; }
+  @keyframes pop { from { transform: scale(.94); opacity: .4; } to { transform: none; opacity: 1; } }
+
+  .countdown {
+    position: fixed; inset: 0; display: grid; place-items: center; z-index: 5;
+    background: color-mix(in srgb, var(--paper) 80%, transparent);
+  }
+  .countdown b {
+    font-family: var(--display); font-weight: 800; font-size: clamp(90px, 22vw, 200px); color: var(--blue);
+    animation: pop .4s ease;
+  }
+
+  /* ---------- Results ---------- */
+  .results-top { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  .score-disc {
+    width: 170px; height: 170px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+    background: var(--marker); color: var(--marker-ink); border: 3px solid var(--edge); box-shadow: 0 6px 0 var(--edge);
+  }
+  .score-disc b { font-family: var(--display); font-weight: 800; font-size: 72px; line-height: .9; display: block; }
+  .score-disc span { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .results-top h2 { font-family: var(--display); font-weight: 800; font-size: 34px; margin: 0 0 6px; line-height: 1.05; text-wrap: balance; }
+  .kv { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 12px; }
+  .kv div { display: flex; flex-direction: column; }
+  .kv b { font-size: 24px; font-variant-numeric: tabular-nums; }
+  .kv span { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); }
+  .badge { display: inline-block; background: var(--good); color: #fff; font-weight: 700; font-size: 13px; padding: 3px 10px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .review { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .review li {
+    background: var(--paper); border: 2px solid var(--line); border-radius: 12px; padding: 10px 14px;
+    font-weight: 700; font-size: 22px; display: flex; align-items: center; gap: .35em; flex-wrap: wrap;
+  }
+  .review li small { font-size: 13px; font-weight: 400; color: var(--ink-soft); width: 100%; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  @media (max-width: 620px) {
+    .answers { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .ans { min-height: 72px; }
+    .results-top { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .kv { justify-content: center; }
+    .stat { min-width: 70px; padding: 4px 10px; }
+    .stat b { font-size: 22px; }
+    .big-btn { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">½</div>
+      <div>
+        <h1>Fact Tap</h1>
+        <p>Hit the matching answer before the clock runs out.</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="sound-toggle" type="button" aria-pressed="true">Sound on</button>
+  </header>
+
+  <!-- SETUP -->
+  <section id="setup" class="wrap" style="gap:22px">
+    <div>
+      <p class="label">Choose your facts</p>
+      <div class="packs" id="packs"></div>
+    </div>
+    <div class="panel">
+      <div>
+        <div class="row-head"><p class="label">Include</p><button class="link" id="fam-all" type="button">Select all</button></div>
+        <div class="chips" id="families"></div>
+      </div>
+      <div>
+        <div class="row-head"><p class="label">Question types</p><button class="link" id="dir-all" type="button">Select all</button></div>
+        <div class="chips" id="directions"></div>
+      </div>
+      <div>
+        <p class="label">Time</p>
+        <div class="chips" id="times"></div>
+      </div>
+      <div class="start-row">
+        <p class="hint" id="best-line"></p>
+        <button class="big-btn" id="start" type="button">Start</button>
+      </div>
+      <p class="warn" id="setup-warn" hidden>Pick at least one fact set and one question type.</p>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="wrap" style="gap:16px" hidden>
+    <div class="hud">
+      <div class="stat"><b id="score">0</b><span>Score</span></div>
+      <div class="stat timer" id="timer-box"><b id="timer">60</b><span id="timer-label">Seconds</span></div>
+      <div class="spacer"></div>
+      <button class="ghost-btn" id="end" type="button">End round</button>
+    </div>
+    <div class="timebar" id="timebar"><i id="timefill"></i></div>
+    <div class="question">
+      <span class="streak" id="streak"></span>
+      <span class="ask" id="ask">Find the percentage</span>
+      <div class="prompt" id="prompt" aria-live="polite"></div>
+    </div>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results" class="wrap" hidden>
+    <div class="panel">
+      <div class="results-top">
+        <div class="score-disc"><div><b id="r-score">0</b><span>Correct</span></div></div>
+        <div>
+          <h2 id="r-title">Nice work!</h2>
+          <p class="hint" id="r-sub"></p>
+          <div class="kv">
+            <div><b id="r-miss">0</b><span>Wrong taps</span></div>
+            <div><b id="r-acc">–</b><span>Accuracy</span></div>
+            <div><b id="r-best">–</b><span>Best</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="r-review-wrap">
+        <p class="label">Facts to practise</p>
+        <ul class="review" id="r-review"></ul>
+      </div>
+      <div class="actions">
+        <button class="big-btn" id="again" type="button">Play again</button>
+        <button class="ghost-btn" id="change" type="button">Change settings</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="countdown" id="countdown" hidden><b id="count-num">3</b></div>
+
+<script>
+/* =====================================================================
+   FACT PACKS
+   Each pack is a set of facts. To add a new one, push another object
+   onto PACKS with:
+     id, name, blurb, example (html for the tile)
+     reps:       { key: { label, kind? } }  kind:'frac' draws a/b stacked
+     families:   [{ id, name, note?, on? }] toggleable subsets of items
+     directions: [{ id, label, from, to, ask?, prompt?, on? }]
+                 ask/prompt may be strings or functions of the item
+     items:      [{ family, <rep keys>... }]
+     summary(item) -> html shown in "Facts to practise"
+   ===================================================================== */
+
+const frac = s => {
+  s = String(s);
+  if (!s.includes('/')) return esc(s);
+  const [n, d] = s.split('/');
+  return `<span class="frac" aria-label="${esc(n)} over ${esc(d)}"><span class="num">${esc(n)}</span><span class="den">${esc(d)}</span></span>`;
+};
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+const FDP_ITEMS = [
+  ['halves',  '1/2',  '0.5',   '50%'],
+  ['halves',  '1/4',  '0.25',  '25%'],
+  ['halves',  '3/4',  '0.75',  '75%'],
+  ['tenths',  '1/10', '0.1',   '10%'],
+  ['tenths',  '3/10', '0.3',   '30%'],
+  ['tenths',  '7/10', '0.7',   '70%'],
+  ['tenths',  '9/10', '0.9',   '90%'],
+  ['fifths',  '1/5',  '0.2',   '20%'],
+  ['fifths',  '2/5',  '0.4',   '40%'],
+  ['fifths',  '3/5',  '0.6',   '60%'],
+  ['fifths',  '4/5',  '0.8',   '80%'],
+  ['hundredths', '1/100', '0.01', '1%'],
+  ['hundredths', '1/50',  '0.02', '2%'],
+  ['hundredths', '1/25',  '0.04', '4%'],
+  ['hundredths', '1/20',  '0.05', '5%'],
+  ['hundredths', '3/20',  '0.15', '15%'],
+  ['eighths', '1/8',  '0.125', '12.5%'],
+  ['eighths', '3/8',  '0.375', '37.5%'],
+  ['eighths', '5/8',  '0.625', '62.5%'],
+  ['eighths', '7/8',  '0.875', '87.5%'],
+  ['thirds',  '1/3',  '0.3̇', '33⅓%'],
+  ['thirds',  '2/3',  '0.6̇', '66⅔%'],
+  ['over1',   '1/1',  '1',     '100%'],
+  ['over1',   '5/4',  '1.25',  '125%'],
+  ['over1',   '3/2',  '1.5',   '150%'],
+  ['over1',   '2/1',  '2',     '200%'],
+].map(([family, f, d, p]) => ({ family, frac: f, dec: d, pct: p }));
+// Whole numbers read better than 1/1 and 2/1 as fractions
+FDP_ITEMS.forEach(it => { if (it.frac === '1/1') it.frac = '1'; if (it.frac === '2/1') it.frac = '2'; });
+
+const SQ_ITEMS = [];
+for (let n = 1; n <= 15; n++) SQ_ITEMS.push({ family: n <= 10 ? 'sq10' : 'sq15', base: String(n), val: String(n * n), pow: 2 });
+for (const n of [1, 2, 3, 4, 5, 10]) SQ_ITEMS.push({ family: 'cubes', base: String(n), val: String(n ** 3), pow: 3 });
+
+const BOND_ITEMS = [];
+for (let a = 10; a <= 90; a += 10) BOND_ITEMS.push({ family: 'tens', a: String(a), b: String(100 - a), total: '100' });
+for (let a = 5; a <= 95; a += 10) BOND_ITEMS.push({ family: 'fives', a: String(a), b: String(100 - a), total: '100' });
+for (let a = 1; a <= 99; a++) if (a % 5) BOND_ITEMS.push({ family: 'any', a: String(a), b: String(100 - a), total: '100' });
+for (let i = 1; i <= 9; i++) BOND_ITEMS.push({ family: 'dec1', a: `0.${i}`, b: `0.${10 - i}`, total: '1' });
+for (let i = 1; i <= 19; i += 2) BOND_ITEMS.push({ family: 'dec2', a: (i * 5 / 100).toFixed(2), b: ((100 - i * 5) / 100).toFixed(2), total: '1' });
+
+const PACKS = [
+  {
+    id: 'fdp',
+    name: 'Fractions, decimals & percentages',
+    blurb: 'Key equivalences, from ½ = 50% up to eighths and thirds.',
+    example: `${frac('3/4')} = 0.75 = 75%`,
+    reps: { frac: { label: 'fraction', kind: 'frac' }, dec: { label: 'decimal' }, pct: { label: 'percentage' } },
+    families: [
+      { id: 'halves', name: 'Halves & quarters', note: '½ ¼ ¾', on: true },
+      { id: 'tenths', name: 'Tenths', note: '⅒ ³⁄₁₀ …', on: true },
+      { id: 'fifths', name: 'Fifths', note: '⅕ ⅖ …', on: true },
+      { id: 'hundredths', name: 'Hundredths', note: '1%, 2%, 5% …' },
+      { id: 'eighths', name: 'Eighths', note: '12.5% …' },
+      { id: 'thirds', name: 'Thirds', note: '33⅓%' },
+      { id: 'over1', name: 'One and over', note: '125%, 150% …' },
+    ],
+    directions: [
+      { id: 'fd', label: 'Fraction → decimal', from: 'frac', to: 'dec', on: true },
+      { id: 'fp', label: 'Fraction → percentage', from: 'frac', to: 'pct', on: true },
+      { id: 'dp', label: 'Decimal → percentage', from: 'dec', to: 'pct', on: true },
+      { id: 'df', label: 'Decimal → fraction', from: 'dec', to: 'frac', on: true },
+      { id: 'pf', label: 'Percentage → fraction', from: 'pct', to: 'frac', on: true },
+      { id: 'pd', label: 'Percentage → decimal', from: 'pct', to: 'dec', on: true },
+    ],
+    items: FDP_ITEMS,
+    summary: it => `${frac(it.frac)} = ${esc(it.dec)} = ${esc(it.pct)}`,
+  },
+  {
+    id: 'squares',
+    name: 'Squares, cubes & roots',
+    blurb: 'Square numbers to 15², cubes and their roots.',
+    example: `7<sup>2</sup> = 49 &nbsp; √81 = 9`,
+    reps: { base: { label: 'number' }, val: { label: 'answer' } },
+    families: [
+      { id: 'sq10', name: 'Squares to 10²', on: true },
+      { id: 'sq15', name: 'Squares 11² to 15²' },
+      { id: 'cubes', name: 'Cubes', note: '1³ to 5³, 10³' },
+    ],
+    directions: [
+      { id: 'up', label: 'Square or cube it', from: 'base', to: 'val', on: true,
+        ask: it => it.pow === 3 ? 'Cube it' : 'Square it',
+        prompt: it => `${esc(it.base)}<sup>${it.pow}</sup>` },
+      { id: 'down', label: 'Find the root', from: 'val', to: 'base', on: true,
+        ask: it => it.pow === 3 ? 'Find the cube root' : 'Find the square root',
+        prompt: it => `${it.pow === 3 ? '∛' : '√'}${esc(it.val)}` },
+    ],
+    items: SQ_ITEMS,
+    summary: it => `${esc(it.base)}<sup>${it.pow}</sup> = ${esc(it.val)}`,
+  },
+  {
+    id: 'bonds',
+    name: 'Number bonds',
+    blurb: 'Pairs that make 100, and decimal pairs that make 1.',
+    example: `65 + <span class="gap">35</span> = 100`,
+    reps: { a: { label: 'number' }, b: { label: 'missing number' } },
+    families: [
+      { id: 'tens', name: 'Tens to 100', note: '30 + 70', on: true },
+      { id: 'fives', name: 'Fives to 100', note: '45 + 55', on: true },
+      { id: 'any', name: 'Any pair to 100', note: '37 + 63' },
+      { id: 'dec1', name: 'Tenths to 1', note: '0.3 + 0.7' },
+      { id: 'dec2', name: 'Hundredths to 1', note: '0.35 + 0.65' },
+    ],
+    directions: [
+      { id: 'add', label: 'Missing addend', from: 'a', to: 'b', on: true,
+        ask: 'Find the missing number',
+        prompt: it => `${esc(it.a)} + <span class="gap">?</span> = ${esc(it.total)}` },
+      { id: 'sub', label: 'Subtract from the total', from: 'a', to: 'b', on: true,
+        ask: 'Find the answer',
+        prompt: it => `${esc(it.total)} − ${esc(it.a)} = <span class="gap">?</span>` },
+    ],
+    items: BOND_ITEMS,
+    summary: it => `${esc(it.a)} + ${esc(it.b)} = ${esc(it.total)}`,
+  },
+];
+
+const TIMES = [
+  { id: 30, label: '30 s' },
+  { id: 60, label: '60 s' },
+  { id: 90, label: '90 s' },
+  { id: 0, label: 'No timer' },
+];
+const MAX_BUTTONS = 12;
+
+/* ---------- storage (per-browser conveniences only) ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('facttap:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('facttap:' + k, JSON.stringify(v)); } catch (e) {} },
+};
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const uniq = a => [...new Set(a)];
+const val = (f, it) => typeof f === 'function' ? f(it) : f;
+function render(pack, rep, s) { return pack.reps[rep].kind === 'frac' ? frac(s) : esc(s); }
+
+/* ---------- setup state ---------- */
+let packId = store.get('pack', 'fdp');
+if (!PACKS.some(p => p.id === packId)) packId = 'fdp';
+const cfgs = {};
+function cfgFor(pack) {
+  if (!cfgs[pack.id]) {
+    const saved = store.get('cfg:' + pack.id, null);
+    const famIds = pack.families.map(f => f.id), dirIds = pack.directions.map(d => d.id);
+    cfgs[pack.id] = {
+      families: saved?.families?.filter(f => famIds.includes(f)) ?? pack.families.filter(f => f.on).map(f => f.id),
+      directions: saved?.directions?.filter(d => dirIds.includes(d)) ?? pack.directions.filter(d => d.on).map(d => d.id),
+      time: saved?.time ?? 60,
+    };
+  }
+  return cfgs[pack.id];
+}
+const currentPack = () => PACKS.find(p => p.id === packId);
+const bestKey = (pack, cfg) => `best:${pack.id}:${[...cfg.families].sort().join('+')}:${[...cfg.directions].sort().join('+')}:${cfg.time}`;
+
+function chip(label, note, on, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip';
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.innerHTML = esc(label) + (note ? ` <small>${esc(note)}</small>` : '');
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function renderSetup() {
+  const pack = currentPack(), cfg = cfgFor(pack);
+  store.set('pack', packId);
+  store.set('cfg:' + pack.id, cfg);
+
+  const packsEl = $('packs'); packsEl.innerHTML = '';
+  PACKS.forEach(p => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pack';
+    b.setAttribute('aria-pressed', p.id === packId ? 'true' : 'false');
+    b.innerHTML = `<span class="pack-eg">${p.example}</span><span class="pack-name">${esc(p.name)}</span><span class="pack-blurb">${esc(p.blurb)}</span>`;
+    b.addEventListener('click', () => { packId = p.id; renderSetup(); });
+    packsEl.appendChild(b);
+  });
+
+  const toggle = (arr, id) => { const i = arr.indexOf(id); i >= 0 ? arr.splice(i, 1) : arr.push(id); renderSetup(); };
+
+  const fam = $('families'); fam.innerHTML = '';
+  pack.families.forEach(f => fam.appendChild(chip(f.name, f.note, cfg.families.includes(f.id), () => toggle(cfg.families, f.id))));
+  const dir = $('directions'); dir.innerHTML = '';
+  pack.directions.forEach(d => dir.appendChild(chip(d.label, '', cfg.directions.includes(d.id), () => toggle(cfg.directions, d.id))));
+  const times = $('times'); times.innerHTML = '';
+  TIMES.forEach(t => times.appendChild(chip(t.label, '', cfg.time === t.id, () => { cfg.time = t.id; renderSetup(); })));
+
+  const ok = cfg.families.length > 0 && cfg.directions.length > 0;
+  $('start').disabled = !ok;
+  $('setup-warn').hidden = ok;
+  const best = store.get(bestKey(pack, cfg), null);
+  const n = pack.items.filter(it => cfg.families.includes(it.family)).length;
+  $('best-line').innerHTML = `<strong>${n}</strong> fact${n === 1 ? '' : 's'} selected` +
+    (cfg.time && best != null ? ` · Best with these settings: <strong>${best}</strong>` : '');
+}
+
+$('fam-all').addEventListener('click', () => { const p = currentPack(); cfgFor(p).families = p.families.map(f => f.id); renderSetup(); });
+$('dir-all').addEventListener('click', () => { const p = currentPack(); cfgFor(p).directions = p.directions.map(d => d.id); renderSetup(); });
+
+/* ---------- sound ---------- */
+let soundOn = store.get('sound', true), actx = null;
+function syncSound() {
+  const b = $('sound-toggle');
+  b.textContent = soundOn ? 'Sound on' : 'Sound off';
+  b.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+}
+$('sound-toggle').addEventListener('click', () => { soundOn = !soundOn; store.set('sound', soundOn); syncSound(); });
+function beep(kind) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    const spec = { ok: ['triangle', 880, 0.14], bad: ['sawtooth', 160, 0.22], tick: ['sine', 520, 0.08], end: ['triangle', 440, 0.5] }[kind];
+    o.type = spec[0]; o.frequency.setValueAtTime(spec[1], t);
+    if (kind === 'ok') o.frequency.exponentialRampToValueAtTime(1320, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + spec[2]);
+    o.connect(g).connect(actx.destination);
+    o.start(t); o.stop(t + spec[2] + 0.05);
+  } catch (e) {}
+}
+
+/* ---------- game ---------- */
+let G = null;
+
+function show(id) { ['setup', 'game', 'results'].forEach(s => $(s).hidden = s !== id); }
+
+function startGame() {
+  const pack = currentPack(), cfg = cfgFor(pack);
+  G = {
+    pack, cfg,
+    pool: pack.items.filter(it => cfg.families.includes(it.family)),
+    dirs: pack.directions.filter(d => cfg.directions.includes(d.id)),
+    score: 0, misses: 0, streak: 0, asked: 0,
+    missed: new Map(),   // item -> count of wrong taps
+    retry: [],           // { item, dir, due }
+    q: null, locked: true, running: false,
+    start: 0, raf: 0,
+  };
+  $('score').textContent = '0';
+  $('streak').textContent = '';
+  $('timer-label').textContent = cfg.time ? 'Seconds' : 'Time';
+  $('timer').textContent = cfg.time ? cfg.time : '0:00';
+  $('timebar').hidden = !cfg.time;
+  $('timebar').classList.remove('low'); $('timer-box').classList.remove('low');
+  $('timefill').style.transform = 'scaleX(1)';
+  $('end').textContent = cfg.time ? 'End round' : 'Finish';
+  show('game');
+  nextQuestion();
+  G.locked = true;
+  runCountdown(() => { G.locked = false; G.running = true; G.start = performance.now(); tick(); });
+}
+
+function runCountdown(done) {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const box = $('countdown'), num = $('count-num');
+  let n = 3;
+  box.hidden = false;
+  const step = () => {
+    if (!G) { box.hidden = true; return; }
+    if (n === 0) { box.hidden = true; done(); return; }
+    num.textContent = n; num.style.animation = 'none'; void num.offsetWidth; num.style.animation = '';
+    beep('tick'); n--;
+    setTimeout(step, reduce ? 500 : 700);
+  };
+  step();
+}
+
+function tick() {
+  if (!G || !G.running) return;
+  const elapsed = (performance.now() - G.start) / 1000;
+  if (G.cfg.time) {
+    const left = Math.max(0, G.cfg.time - elapsed);
+    $('timer').textContent = Math.ceil(left);
+    $('timefill').style.transform = `scaleX(${left / G.cfg.time})`;
+    const low = left <= 10;
+    $('timebar').classList.toggle('low', low); $('timer-box').classList.toggle('low', low);
+    if (left <= 0) { finish(); return; }
+  } else {
+    const s = Math.floor(elapsed);
+    $('timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+  G.raf = requestAnimationFrame(tick);
+}
+
+function chooseQuestion() {
+  const due = G.retry.findIndex(r => r.due <= G.asked);
+  if (due >= 0) return G.retry.splice(due, 1)[0];
+  let item, dir, tries = 0;
+  do {
+    item = pick(G.pool); dir = pick(G.dirs); tries++;
+  } while (tries < 25 && G.q && G.pool.length > 1 && item === G.q.item);
+  return { item, dir };
+}
+
+function buildOptions(item, dir) {
+  const answer = String(item[dir.to]);
+  const valuesOf = list => uniq(list.map(x => String(x[dir.to]))).filter(v => v !== answer);
+  // Prefer distractors from the same family (e.g. other eighths), then fill from the rest.
+  let same = shuffle(valuesOf(G.pool.filter(x => x.family === item.family)));
+  let opts = same.slice(0, MAX_BUTTONS - 1);
+  if (opts.length < MAX_BUTTONS - 1) {
+    const rest = shuffle(valuesOf(G.pool).filter(v => !opts.includes(v)));
+    opts = opts.concat(rest.slice(0, MAX_BUTTONS - 1 - opts.length));
+  }
+  return shuffle([answer, ...opts]);
+}
+
+function nextQuestion() {
+  const { item, dir } = chooseQuestion();
+  G.asked++;
+  G.q = { item, dir, answer: String(item[dir.to]), wrong: false };
+  const pack = G.pack;
+  $('ask').textContent = dir.ask ? val(dir.ask, item) : `Find the ${pack.reps[dir.to].label}`;
+  const p = $('prompt');
+  p.innerHTML = dir.prompt ? val(dir.prompt, item) : render(pack, dir.from, item[dir.from]);
+  p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop');
+
+  const box = $('answers'); box.innerHTML = '';
+  buildOptions(item, dir).forEach(v => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'ans';
+    b.innerHTML = render(pack, dir.to, v);
+    b.dataset.v = v;
+    b.addEventListener('click', () => answer(b));
+    box.appendChild(b);
+  });
+}
+
+function answer(btn) {
+  if (!G || G.locked || btn.disabled) return;
+  if (btn.dataset.v === G.q.answer) {
+    G.locked = true;
+    G.score++; G.streak++;
+    $('score').textContent = G.score;
+    const st = $('streak');
+    st.textContent = G.streak >= 3 ? `${G.streak} in a row` : '';
+    st.dataset.hot = G.streak >= 5 ? 'true' : 'false';
+    btn.classList.add('right');
+    beep('ok');
+    setTimeout(() => { if (G && G.running) { G.locked = false; nextQuestion(); } }, 260);
+  } else {
+    G.misses++; G.streak = 0;
+    $('streak').textContent = '';
+    btn.classList.add('wrong', 'shake');
+    btn.disabled = true;
+    beep('bad');
+    if (!G.q.wrong) {
+      G.q.wrong = true;
+      G.missed.set(G.q.item, (G.missed.get(G.q.item) || 0) + 1);
+      G.retry.push({ item: G.q.item, dir: G.q.dir, due: G.asked + 3 });
+    }
+  }
+}
+
+function finish() {
+  if (!G) return;
+  G.running = false; G.locked = true;
+  cancelAnimationFrame(G.raf);
+  beep('end');
+  const { pack, cfg, score, misses } = G;
+  const taps = score + misses;
+  const key = bestKey(pack, cfg);
+  const prevBest = store.get(key, null);
+  const isBest = cfg.time > 0 && score > 0 && (prevBest == null || score > prevBest);
+  if (isBest) store.set(key, score);
+
+  $('r-score').textContent = score;
+  $('r-miss').textContent = misses;
+  $('r-acc').textContent = taps ? Math.round(100 * score / taps) + '%' : '–';
+  $('r-best').innerHTML = cfg.time ? `${isBest ? score : (prevBest ?? '–')}${isBest ? '<span class="badge">New!</span>' : ''}` : '–';
+  const elapsed = Math.round((performance.now() - G.start) / 1000);
+  const title = score === 0 ? 'Give it another go' : misses === 0 ? 'Perfect round!' : score >= 20 ? 'Brilliant!' : 'Nice work!';
+  $('r-title').textContent = title;
+  $('r-sub').textContent = `${pack.name} · ${cfg.time ? cfg.time + ' seconds' : elapsed + ' seconds, no timer'}`;
+
+  const list = $('r-review'); list.innerHTML = '';
+  const missed = [...G.missed.entries()].sort((a, b) => b[1] - a[1]);
+  $('r-review-wrap').hidden = missed.length === 0;
+  missed.forEach(([item, n]) => {
+    const li = document.createElement('li');
+    li.innerHTML = `${pack.summary(item)}<small>${n} wrong tap${n === 1 ? '' : 's'}</small>`;
+    list.appendChild(li);
+  });
+  show('results');
+}
+
+$('start').addEventListener('click', startGame);
+$('again').addEventListener('click', startGame);
+$('end').addEventListener('click', () => { if (G && G.running) finish(); else if (G) { G = null; $('countdown').hidden = true; show('setup'); renderSetup(); } });
+$('change').addEventListener('click', () => { G = null; show('setup'); renderSetup(); });
+
+syncSound();
+renderSetup();
+</script>
+</body>
+</html>
