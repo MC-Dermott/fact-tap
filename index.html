@@ -195,7 +195,12 @@
     margin-top: 10px; min-height: 1.3em; display: flex; align-items: center; justify-content: center; gap: .15em;
     font-variant-numeric: tabular-nums;
   }
-  .scaffold { margin-top: 14px; display: flex; justify-content: center; }
+  .scaffold { margin-top: 14px; display: flex; justify-content: center; transition: opacity .6s ease, visibility .6s; }
+  .scaffold.faded { opacity: 0; visibility: hidden; }
+  .fade-row { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; max-width: 420px; }
+  .fade-row label { font-weight: 700; font-size: 15px; }
+  .fade-row input { width: 100%; accent-color: var(--blue); }
+  .fade-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); }
   .scaffold svg { max-width: 100%; height: auto; overflow: visible; }
   .question.with-scaffold .prompt { font-size: clamp(40px, 8vw, 68px); margin-top: 6px; }
   .tf-cell { fill: var(--tile); stroke: var(--ink); stroke-width: 2; }
@@ -310,6 +315,11 @@
       <div id="scaf-block">
         <p class="label">Picture support</p>
         <div class="chips" id="scaffolds"></div>
+        <div class="fade-row" id="fade-row">
+          <label for="fade" id="fade-label">Picture stays on screen</label>
+          <input type="range" id="fade" min="0.5" max="10.5" step="0.5" value="10.5">
+          <div class="fade-scale" aria-hidden="true"><span>½ s</span><span>5 s</span><span>10 s</span><span>Stays</span></div>
+        </div>
       </div>
       <div>
         <p class="label">Time</p>
@@ -635,6 +645,7 @@ function cfgFor(pack) {
       directions: saved?.directions?.filter(d => dirIds.includes(d)) ?? pack.directions.filter(d => d.on).map(d => d.id),
       time: saved?.time ?? 60,
       scaffold: saved?.scaffold ?? 'none',
+      fade: saved?.fade ?? 0,   // seconds before the picture vanishes; 0 = it stays
     };
     const c = cfgs[pack.id];
     if (!c.families?.length) c.families = pack.families.filter(f => f.on).map(f => f.id);
@@ -643,7 +654,7 @@ function cfgFor(pack) {
 }
 const currentPack = () => PACKS.find(p => p.id === packId);
 const bestKey = (pack, cfg) => `best:${pack.id}:${[...cfg.families].sort().join('+')}:${[...cfg.directions].sort().join('+')}:${cfg.time}` +
-  (pack.scaffolds && cfg.scaffold !== 'none' ? `:${cfg.scaffold}` : '');
+  (pack.scaffolds && cfg.scaffold !== 'none' ? `:${cfg.scaffold}` + (cfg.fade ? `:fade${cfg.fade}` : '') : '');
 
 function chip(label, note, on, onClick) {
   const b = document.createElement('button');
@@ -680,6 +691,9 @@ function renderSetup() {
   $('scaf-block').hidden = !pack.scaffolds;
   const scaf = $('scaffolds'); scaf.innerHTML = '';
   if (pack.scaffolds) SCAFFOLDS.forEach(o => scaf.appendChild(chip(o.label, '', cfg.scaffold === o.id, () => { cfg.scaffold = o.id; renderSetup(); })));
+  $('fade-row').hidden = !pack.scaffolds || cfg.scaffold === 'none';
+  $('fade').value = cfg.fade || 10.5;
+  $('fade-label').textContent = cfg.fade ? `Picture disappears after ${cfg.fade === 0.5 ? '½' : String(cfg.fade).replace('.5', '½')} second${cfg.fade <= 1 ? '' : 's'}` : 'Picture stays on screen';
   const times = $('times'); times.innerHTML = '';
   TIMES.forEach(t => times.appendChild(chip(t.label, '', cfg.time === t.id, () => { cfg.time = t.id; renderSetup(); })));
 
@@ -692,6 +706,11 @@ function renderSetup() {
     (cfg.time && best != null ? ` · Best with these settings: <strong>${best}</strong>` : '');
 }
 
+$('fade').addEventListener('input', e => {
+  const v = +e.target.value;
+  cfgFor(currentPack()).fade = v > 10 ? 0 : v;
+  renderSetup();
+});
 $('fam-all').addEventListener('click', () => { const p = currentPack(); cfgFor(p).families = p.families.map(f => f.id); renderSetup(); });
 $('dir-all').addEventListener('click', () => { const p = currentPack(); cfgFor(p).directions = p.directions.map(d => d.id); renderSetup(); });
 
@@ -722,6 +741,16 @@ function beep(kind) {
 /* ---------- game ---------- */
 let G = null;
 
+// Show the picture, then hide it after the chosen time (only once the round is running)
+let fadeTimer = 0;
+function armFade() {
+  clearTimeout(fadeTimer);
+  const box = $('scaffold');
+  box.classList.remove('faded');
+  const secs = G && G.pack.scaffolds && G.cfg.scaffold !== 'none' ? G.cfg.fade : 0;
+  if (secs && G.running) fadeTimer = setTimeout(() => box.classList.add('faded'), secs * 1000);
+}
+
 function show(id) { ['setup', 'game', 'results'].forEach(s => $(s).hidden = s !== id); }
 
 function startGame() {
@@ -747,7 +776,7 @@ function startGame() {
   show('game');
   nextQuestion();
   G.locked = true;
-  runCountdown(() => { G.locked = false; G.running = true; G.start = performance.now(); tick(); });
+  runCountdown(() => { G.locked = false; G.running = true; G.start = performance.now(); armFade(); tick(); });
 }
 
 function runCountdown(done) {
@@ -816,6 +845,7 @@ function nextQuestion() {
   const sk = pack.scaffolds && G.cfg.scaffold !== 'none' ? G.cfg.scaffold : null;
   $('scaffold').hidden = !sk;
   $('scaffold').innerHTML = sk ? scaffoldSVG(sk, item, dir.id) : '';
+  armFade();
   p.parentElement.classList.toggle('with-scaffold', !!sk);
   p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop');
 
