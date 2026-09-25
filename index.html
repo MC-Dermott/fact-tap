@@ -109,7 +109,7 @@
     font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft);
     margin: 0 0 10px;
   }
-  .packs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .packs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
   .pack {
     text-align: left; cursor: pointer; background: var(--tile); border: 2px solid var(--edge); border-radius: 16px;
     padding: 14px 16px 16px; box-shadow: 0 4px 0 var(--edge); display: flex; flex-direction: column; gap: 6px;
@@ -279,7 +279,7 @@
     </div>
     <div class="panel">
       <div>
-        <div class="row-head"><p class="label">Include</p><button class="link" id="fam-all" type="button">Select all</button></div>
+        <div class="row-head" id="fam-head"><p class="label">Include</p><button class="link" id="fam-all" type="button">Select all</button></div>
         <div class="chips" id="families"></div>
       </div>
       <div>
@@ -406,6 +406,25 @@ for (let a = 1; a <= 99; a++) if (a % 5) BOND_ITEMS.push({ family: 'any', a: Str
 for (let i = 1; i <= 9; i++) BOND_ITEMS.push({ family: 'dec1', a: `0.${i}`, b: `0.${10 - i}`, total: '1' });
 for (let i = 1; i <= 19; i += 2) BOND_ITEMS.push({ family: 'dec2', a: (i * 5 / 100).toFixed(2), b: ((100 - i * 5) / 100).toFixed(2), total: '1' });
 
+// Number bond packs share their question types; only the pairs differ.
+function bondPack(id, name, blurb, example, families) {
+  const famIds = families.map(f => f.id);
+  return {
+    id, name, blurb, example, families,
+    reps: { a: { label: 'number' }, b: { label: 'missing number' } },
+    directions: [
+      { id: 'add', label: 'Missing addend', from: 'a', to: 'b', on: true,
+        ask: 'Find the missing number',
+        prompt: it => `${esc(it.a)} + <span class="gap">?</span> = ${esc(it.total)}` },
+      { id: 'sub', label: 'Subtract from the total', from: 'a', to: 'b', on: true,
+        ask: 'Find the answer',
+        prompt: it => `${esc(it.total)} − ${esc(it.a)} = <span class="gap">?</span>` },
+    ],
+    items: BOND_ITEMS.filter(it => famIds.includes(it.family)),
+    summary: it => `${esc(it.a)} + ${esc(it.b)} = ${esc(it.total)}`,
+  };
+}
+
 const PACKS = [
   {
     id: 'fdp',
@@ -433,32 +452,17 @@ const PACKS = [
     items: FDP_ITEMS,
     summary: it => `${frac(it.frac)} = ${esc(it.dec)} = ${esc(it.pct)}`,
   },
-  {
-    id: 'bonds',
-    name: 'Number bonds',
-    blurb: 'Pairs that make 10, 20 and 100, and decimal pairs that make 1.',
-    example: `65 + <span class="gap">35</span> = 100`,
-    reps: { a: { label: 'number' }, b: { label: 'missing number' } },
-    families: [
-      { id: 'to10', name: 'Pairs to 10', note: '3 + 7', on: true },
-      { id: 'to20', name: 'Pairs to 20', note: '13 + 7' },
-      { id: 'tens', name: 'Tens to 100', note: '30 + 70' },
-      { id: 'fives', name: 'Fives to 100', note: '45 + 55' },
-      { id: 'any', name: 'Any pair to 100', note: '37 + 63' },
-      { id: 'dec1', name: 'Tenths to 1', note: '0.3 + 0.7' },
-      { id: 'dec2', name: 'Hundredths to 1', note: '0.35 + 0.65' },
-    ],
-    directions: [
-      { id: 'add', label: 'Missing addend', from: 'a', to: 'b', on: true,
-        ask: 'Find the missing number',
-        prompt: it => `${esc(it.a)} + <span class="gap">?</span> = ${esc(it.total)}` },
-      { id: 'sub', label: 'Subtract from the total', from: 'a', to: 'b', on: true,
-        ask: 'Find the answer',
-        prompt: it => `${esc(it.total)} − ${esc(it.a)} = <span class="gap">?</span>` },
-    ],
-    items: BOND_ITEMS,
-    summary: it => `${esc(it.a)} + ${esc(it.b)} = ${esc(it.total)}`,
-  },
+  bondPack('bonds10', 'Bonds to 10', 'Pairs of numbers that make 10.', `7 + <span class="gap">3</span> = 10`,
+    [{ id: 'to10', name: 'Pairs to 10', on: true }]),
+  bondPack('bonds20', 'Bonds to 20', 'Pairs of numbers that make 20.', `13 + <span class="gap">7</span> = 20`,
+    [{ id: 'to20', name: 'Pairs to 20', on: true }]),
+  bondPack('bonds', 'Bonds to 100 and 1', 'Pairs that make 100, and decimal pairs that make 1.', `65 + <span class="gap">35</span> = 100`, [
+    { id: 'tens', name: 'Tens to 100', note: '30 + 70', on: true },
+    { id: 'fives', name: 'Fives to 100', note: '45 + 55', on: true },
+    { id: 'any', name: 'Any pair to 100', note: '37 + 63' },
+    { id: 'dec1', name: 'Tenths to 1', note: '0.3 + 0.7' },
+    { id: 'dec2', name: 'Hundredths to 1', note: '0.35 + 0.65' },
+  ]),
 ];
 
 const TIMES = [
@@ -492,10 +496,12 @@ function cfgFor(pack) {
     const saved = store.get('cfg:' + pack.id, null);
     const famIds = pack.families.map(f => f.id), dirIds = pack.directions.map(d => d.id);
     cfgs[pack.id] = {
-      families: saved?.families?.filter(f => famIds.includes(f)) ?? pack.families.filter(f => f.on).map(f => f.id),
+      families: saved?.families?.filter(f => famIds.includes(f)),
       directions: saved?.directions?.filter(d => dirIds.includes(d)) ?? pack.directions.filter(d => d.on).map(d => d.id),
       time: saved?.time ?? 60,
     };
+    const c = cfgs[pack.id];
+    if (!c.families?.length) c.families = pack.families.filter(f => f.on).map(f => f.id);
   }
   return cfgs[pack.id];
 }
@@ -529,6 +535,8 @@ function renderSetup() {
   const toggle = (arr, id) => { const i = arr.indexOf(id); i >= 0 ? arr.splice(i, 1) : arr.push(id); renderSetup(); };
 
   const fam = $('families'); fam.innerHTML = '';
+  const oneSet = pack.families.length === 1;
+  $('fam-head').parentElement.hidden = oneSet;
   pack.families.forEach(f => fam.appendChild(chip(f.name, f.note, cfg.families.includes(f.id), () => toggle(cfg.families, f.id))));
   const dir = $('directions'); dir.innerHTML = '';
   pack.directions.forEach(d => dir.appendChild(chip(d.label, '', cfg.directions.includes(d.id), () => toggle(cfg.directions, d.id))));
