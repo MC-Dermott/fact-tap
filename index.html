@@ -24,6 +24,7 @@
     --good-soft: #d7f3e2;
     --bad: #d23f3f;
     --bad-soft: #fbdede;
+    --counter: #e0453a;
     --display: "Bricolage Grotesque", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
     --body: "Atkinson Hyperlegible", "Verdana", "Segoe UI", sans-serif;
   }
@@ -45,6 +46,7 @@
       --good-soft: #143826;
       --bad: #ff6f6f;
       --bad-soft: #3d1c20;
+      --counter: #ff6b5e;
     }
   }
   :root[data-theme="dark"] {
@@ -64,6 +66,7 @@
     --good-soft: #143826;
     --bad: #ff6f6f;
     --bad-soft: #3d1c20;
+    --counter: #ff6b5e;
   }
 
   html, body { height: 100%; }
@@ -192,6 +195,24 @@
     margin-top: 10px; min-height: 1.3em; display: flex; align-items: center; justify-content: center; gap: .15em;
     font-variant-numeric: tabular-nums;
   }
+  .scaffold { margin-top: 14px; display: flex; justify-content: center; }
+  .scaffold svg { max-width: 100%; height: auto; overflow: visible; }
+  .question.with-scaffold .prompt { font-size: clamp(40px, 8vw, 68px); margin-top: 6px; }
+  .tf-cell { fill: var(--tile); stroke: var(--ink); stroke-width: 2; }
+  .tf-dot { fill: var(--counter); }
+  .tf-dot.gone { opacity: .22; }
+  .tf-x { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+  .nc-tray { fill: none; stroke: var(--ink-soft); stroke-opacity: .5; stroke-width: 2; stroke-dasharray: 6 5; }
+  .nc-edge { fill: var(--edge); stroke: var(--edge); stroke-width: 6; stroke-linejoin: round; }
+  .nc-hole { fill: var(--tile); stroke: var(--edge); stroke-opacity: .45; stroke-width: 1.5; }
+  .nc-gone { opacity: .22; }
+  .nc-missing { fill: none; stroke: var(--ink-soft); stroke-width: 2; stroke-dasharray: 4 3; }
+  .bar-whole { fill: color-mix(in srgb, var(--blue) 16%, var(--tile)); stroke: var(--ink); stroke-width: 2; }
+  .bar-known { fill: color-mix(in srgb, var(--marker) 65%, var(--tile)); stroke: var(--ink); stroke-width: 2; }
+  .bar-missing { fill: var(--tile); stroke: var(--blue); stroke-width: 2.5; stroke-dasharray: 6 4; }
+  .bar-tick { stroke: var(--ink); stroke-opacity: .2; stroke-width: 1; }
+  .bar-lbl { fill: var(--ink); font: 700 19px var(--body); text-anchor: middle; dominant-baseline: central; }
+  .bar-lbl.q { fill: var(--blue); }
   .streak { position: absolute; top: 14px; right: 16px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
   .streak[data-hot="true"] { color: var(--good); }
 
@@ -286,6 +307,10 @@
         <div class="row-head"><p class="label">Question types</p><button class="link" id="dir-all" type="button">Select all</button></div>
         <div class="chips" id="directions"></div>
       </div>
+      <div id="scaf-block">
+        <p class="label">Picture support</p>
+        <div class="chips" id="scaffolds"></div>
+      </div>
       <div>
         <p class="label">Time</p>
         <div class="chips" id="times"></div>
@@ -311,6 +336,7 @@
       <span class="streak" id="streak"></span>
       <span class="ask" id="ask">Find the percentage</span>
       <div class="prompt" id="prompt" aria-live="polite"></div>
+      <div class="scaffold" id="scaffold" aria-hidden="true" hidden></div>
     </div>
     <div class="answers" id="answers"></div>
   </section>
@@ -407,16 +433,17 @@ for (let i = 1; i <= 9; i++) BOND_ITEMS.push({ family: 'dec1', a: `0.${i}`, b: `
 for (let i = 1; i <= 19; i += 2) BOND_ITEMS.push({ family: 'dec2', a: (i * 5 / 100).toFixed(2), b: ((100 - i * 5) / 100).toFixed(2), total: '1' });
 
 // Number bond packs share their question types; only the pairs differ.
-function bondPack(id, name, blurb, example, families) {
+function bondPack(id, name, blurb, example, families, opts = {}) {
   const famIds = families.map(f => f.id);
   return {
     id, name, blurb, example, families,
+    scaffolds: !!opts.scaffolds,
     reps: { a: { label: 'number' }, b: { label: 'missing number' } },
     directions: [
-      { id: 'add', label: 'Missing addend', from: 'a', to: 'b', on: true,
+      { id: 'add', label: opts.addLabel ?? 'Missing addend', from: 'a', to: 'b', on: true,
         ask: 'Find the missing number',
         prompt: it => `${esc(it.a)} + <span class="gap">?</span> = ${esc(it.total)}` },
-      { id: 'sub', label: 'Subtract from the total', from: 'a', to: 'b', on: true,
+      { id: 'sub', label: opts.subLabel ?? 'Subtract from the total', from: 'a', to: 'b', on: true,
         ask: 'Find the answer',
         prompt: it => `${esc(it.total)} − ${esc(it.a)} = <span class="gap">?</span>` },
     ],
@@ -453,9 +480,9 @@ const PACKS = [
     summary: it => `${frac(it.frac)} = ${esc(it.dec)} = ${esc(it.pct)}`,
   },
   bondPack('bonds10', 'Bonds to 10', 'Pairs of numbers that make 10.', `7 + <span class="gap">3</span> = 10`,
-    [{ id: 'to10', name: 'Pairs to 10', on: true }]),
+    [{ id: 'to10', name: 'Pairs to 10', on: true }], { addLabel: 'Addition', subLabel: 'Subtraction', scaffolds: true }),
   bondPack('bonds20', 'Bonds to 20', 'Pairs of numbers that make 20.', `13 + <span class="gap">7</span> = 20`,
-    [{ id: 'to20', name: 'Pairs to 20', on: true }]),
+    [{ id: 'to20', name: 'Pairs to 20', on: true }], { addLabel: 'Addition', subLabel: 'Subtraction', scaffolds: true }),
   bondPack('bonds', 'Bonds to 100 and 1', 'Pairs that make 100, and decimal pairs that make 1.', `65 + <span class="gap">35</span> = 100`, [
     { id: 'tens', name: 'Tens to 100', note: '30 + 70', on: true },
     { id: 'fives', name: 'Fives to 100', note: '45 + 55', on: true },
@@ -464,6 +491,114 @@ const PACKS = [
     { id: 'dec2', name: 'Hundredths to 1', note: '0.35 + 0.65' },
   ]),
 ];
+
+/* ---------- picture support for bonds to 10 and 20 ---------- */
+const SCAFFOLDS = [
+  { id: 'none', label: 'None' },
+  { id: 'frames', label: 'Ten frames' },
+  { id: 'numicon', label: 'Numicon' },
+  { id: 'bar', label: 'Bar model' },
+];
+// Standard Numicon colours, 1 to 10
+const NUMICON = { 1: '#f28c28', 2: '#2f6fd6', 3: '#2fa84f', 4: '#f5d224', 5: '#57c3e8', 6: '#8a4fc4', 7: '#ffffff', 8: '#e03a3a', 9: '#9bd13b', 10: '#f28c28' };
+const U = 34, GROUP_GAP = 22;
+
+// Addition shows the known part and leaves the rest empty.
+// Subtraction shows the whole, with the part taken away faded out.
+function scaffoldSVG(kind, item, dirId) {
+  const T = +item.total, a = +item.a, b = +item.b, sub = dirId === 'sub';
+  if (kind === 'frames') return tenFrames(T, a, b, sub);
+  if (kind === 'numicon') return numicon(T, a, b, sub);
+  if (kind === 'bar') return barModel(T, a, b);
+  return '';
+}
+const svgWrap = (w, h, body) => `<svg viewBox="-6 -6 ${w + 12} ${h + 12}" width="${Math.round((w + 12) * 1.25)}">${body}</svg>`;
+
+function tenFrames(T, a, b, sub) {
+  const groups = T / 10, w = groups * 5 * U + (groups - 1) * GROUP_GAP;
+  let out = '';
+  for (let k = 0; k < T; k++) {
+    const g = Math.floor(k / 10), i = k % 10;
+    const x = g * (5 * U + GROUP_GAP) + (i % 5) * U, y = Math.floor(i / 5) * U;
+    const cx = x + U / 2, cy = y + U / 2, r = U * 0.34;
+    out += `<rect class="tf-cell" x="${x}" y="${y}" width="${U}" height="${U}"/>`;
+    if (!sub && k < a) out += `<circle class="tf-dot" cx="${cx}" cy="${cy}" r="${r}"/>`;
+    if (sub && k < b) out += `<circle class="tf-dot" cx="${cx}" cy="${cy}" r="${r}"/>`;
+    if (sub && k >= b) {
+      const d = r * 0.8;
+      out += `<circle class="tf-dot gone" cx="${cx}" cy="${cy}" r="${r}"/>` +
+        `<path class="tf-x" d="M${cx - d} ${cy - d}L${cx + d} ${cy + d}M${cx + d} ${cy - d}L${cx - d} ${cy + d}"/>`;
+    }
+  }
+  return svgWrap(w, 2 * U, out);
+}
+
+function numicon(T, a, b, sub) {
+  const groups = T / 10, w = groups * 5 * U + (groups - 1) * GROUP_GAP;
+  // Numicon holes fill column by column (top then bottom), so odd pieces have the bump top-right
+  const cell = k => {
+    const g = Math.floor(k / 10), i = k % 10;
+    return { g, x: g * (5 * U + GROUP_GAP) + Math.floor(i / 2) * U, y: (i % 2) * U };
+  };
+  const piece = (ks, cls) => {
+    if (!ks.length) return '';
+    let edge = '', fill = '', holes = '';
+    const colour = NUMICON[ks.length];
+    ks.map(cell).forEach(c => {
+      edge += `<rect class="nc-edge" x="${c.x}" y="${c.y}" width="${U}" height="${U}"/>`;
+      fill += `<rect x="${c.x - 0.5}" y="${c.y - 0.5}" width="${U + 1}" height="${U + 1}" style="fill:${colour}"/>`;
+      holes += `<circle class="nc-hole" cx="${c.x + U / 2}" cy="${c.y + U / 2}" r="${U * 0.24}"/>`;
+    });
+    return `<g class="${cls}">${edge}${fill}${holes}</g>`;
+  };
+  // split a range of positions into one piece per group of ten
+  const pieces = (from, to, cls) => {
+    let out = '';
+    for (let g = 0; g < groups; g++) {
+      const ks = [];
+      for (let k = Math.max(from, g * 10); k < Math.min(to, g * 10 + 10); k++) ks.push(k);
+      out += piece(ks, cls);
+    }
+    return out;
+  };
+  let out = '';
+  for (let g = 0; g < groups; g++) {
+    out += `<rect class="nc-tray" x="${g * (5 * U + GROUP_GAP) - 4}" y="-4" width="${5 * U + 8}" height="${2 * U + 8}" rx="10"/>`;
+  }
+  if (sub) {
+    out += pieces(b, T, 'nc-gone') + pieces(0, b, '');
+  } else {
+    out += pieces(0, a, '');
+    for (let k = a; k < T; k++) {
+      const c = cell(k);
+      out += `<circle class="nc-missing" cx="${c.x + U / 2}" cy="${c.y + U / 2}" r="${U * 0.24}"/>`;
+    }
+  }
+  return svgWrap(w, 2 * U, out);
+}
+
+function barModel(T, a, b) {
+  const W = 400, H = 40, gap = 12, unit = W / T;
+  const ticks = (x0, n, y) => {
+    let t = '';
+    for (let i = 1; i < n; i++) t += `<line class="bar-tick" x1="${x0 + i * unit}" y1="${y + 4}" x2="${x0 + i * unit}" y2="${y + H - 4}"/>`;
+    return t;
+  };
+  const y2 = H + gap;
+  let out = `<rect class="bar-whole" x="0" y="0" width="${W}" height="${H}" rx="4"/>${ticks(0, T, 0)}` +
+    `<text class="bar-lbl" x="${W / 2}" y="${H / 2}">${T}</text>`;
+  if (a > 0) {
+    out += `<rect class="bar-known" x="0" y="${y2}" width="${a * unit}" height="${H}" rx="4"/>${ticks(0, a, y2)}` +
+      `<text class="bar-lbl" x="${a * unit / 2}" y="${y2 + H / 2}">${a}</text>`;
+  }
+  if (b > 0) {
+    out += `<rect class="bar-missing" x="${a * unit}" y="${y2}" width="${b * unit}" height="${H}" rx="4"/>` +
+      `<text class="bar-lbl q" x="${a * unit + b * unit / 2}" y="${y2 + H / 2}">?</text>`;
+  } else {
+    out += `<text class="bar-lbl q" x="${W + 16}" y="${y2 + H / 2}">?</text>`;
+  }
+  return svgWrap(W + (b > 0 ? 0 : 30), 2 * H + gap, out);
+}
 
 const TIMES = [
   { id: 30, label: '30 s' },
@@ -499,6 +634,7 @@ function cfgFor(pack) {
       families: saved?.families?.filter(f => famIds.includes(f)),
       directions: saved?.directions?.filter(d => dirIds.includes(d)) ?? pack.directions.filter(d => d.on).map(d => d.id),
       time: saved?.time ?? 60,
+      scaffold: saved?.scaffold ?? 'none',
     };
     const c = cfgs[pack.id];
     if (!c.families?.length) c.families = pack.families.filter(f => f.on).map(f => f.id);
@@ -506,7 +642,8 @@ function cfgFor(pack) {
   return cfgs[pack.id];
 }
 const currentPack = () => PACKS.find(p => p.id === packId);
-const bestKey = (pack, cfg) => `best:${pack.id}:${[...cfg.families].sort().join('+')}:${[...cfg.directions].sort().join('+')}:${cfg.time}`;
+const bestKey = (pack, cfg) => `best:${pack.id}:${[...cfg.families].sort().join('+')}:${[...cfg.directions].sort().join('+')}:${cfg.time}` +
+  (pack.scaffolds && cfg.scaffold !== 'none' ? `:${cfg.scaffold}` : '');
 
 function chip(label, note, on, onClick) {
   const b = document.createElement('button');
@@ -540,6 +677,9 @@ function renderSetup() {
   pack.families.forEach(f => fam.appendChild(chip(f.name, f.note, cfg.families.includes(f.id), () => toggle(cfg.families, f.id))));
   const dir = $('directions'); dir.innerHTML = '';
   pack.directions.forEach(d => dir.appendChild(chip(d.label, '', cfg.directions.includes(d.id), () => toggle(cfg.directions, d.id))));
+  $('scaf-block').hidden = !pack.scaffolds;
+  const scaf = $('scaffolds'); scaf.innerHTML = '';
+  if (pack.scaffolds) SCAFFOLDS.forEach(o => scaf.appendChild(chip(o.label, '', cfg.scaffold === o.id, () => { cfg.scaffold = o.id; renderSetup(); })));
   const times = $('times'); times.innerHTML = '';
   TIMES.forEach(t => times.appendChild(chip(t.label, '', cfg.time === t.id, () => { cfg.time = t.id; renderSetup(); })));
 
@@ -673,6 +813,10 @@ function nextQuestion() {
   $('ask').textContent = dir.ask ? val(dir.ask, item) : `Find the ${pack.reps[dir.to].label}`;
   const p = $('prompt');
   p.innerHTML = dir.prompt ? val(dir.prompt, item) : render(pack, dir.from, item[dir.from]);
+  const sk = pack.scaffolds && G.cfg.scaffold !== 'none' ? G.cfg.scaffold : null;
+  $('scaffold').hidden = !sk;
+  $('scaffold').innerHTML = sk ? scaffoldSVG(sk, item, dir.id) : '';
+  p.parentElement.classList.toggle('with-scaffold', !!sk);
   p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop');
 
   const box = $('answers'); box.innerHTML = '';
