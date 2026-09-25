@@ -10,8 +10,7 @@ Open `index.html` in any browser. It's a single file, so there's no install or s
 
 - **Fractions, decimals & percentages**: halves and quarters, tenths, fifths, hundredths, eighths,
   thirds, and values of one and over. All six conversion directions can be switched on or off.
-- **Squares, cubes & roots**
-- **Number bonds**: pairs to 100, and decimal pairs to 1
+- **Number bonds**: pairs to 10, pairs to 20, pairs to 100, and decimal pairs to 1
 
 Wrong answers are re-asked three questions later. The results screen lists the facts a student
 got wrong, shown as full equivalences (e.g. ⅜ = 0.375 = 37.5%). Best scores are saved in the

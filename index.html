@@ -397,11 +397,9 @@ const FDP_ITEMS = [
 // Whole numbers read better than 1/1 and 2/1 as fractions
 FDP_ITEMS.forEach(it => { if (it.frac === '1/1') it.frac = '1'; if (it.frac === '2/1') it.frac = '2'; });
 
-const SQ_ITEMS = [];
-for (let n = 1; n <= 15; n++) SQ_ITEMS.push({ family: n <= 10 ? 'sq10' : 'sq15', base: String(n), val: String(n * n), pow: 2 });
-for (const n of [1, 2, 3, 4, 5, 10]) SQ_ITEMS.push({ family: 'cubes', base: String(n), val: String(n ** 3), pow: 3 });
-
 const BOND_ITEMS = [];
+for (let a = 0; a <= 10; a++) BOND_ITEMS.push({ family: 'to10', a: String(a), b: String(10 - a), total: '10' });
+for (let a = 0; a <= 20; a++) BOND_ITEMS.push({ family: 'to20', a: String(a), b: String(20 - a), total: '20' });
 for (let a = 10; a <= 90; a += 10) BOND_ITEMS.push({ family: 'tens', a: String(a), b: String(100 - a), total: '100' });
 for (let a = 5; a <= 95; a += 10) BOND_ITEMS.push({ family: 'fives', a: String(a), b: String(100 - a), total: '100' });
 for (let a = 1; a <= 99; a++) if (a % 5) BOND_ITEMS.push({ family: 'any', a: String(a), b: String(100 - a), total: '100' });
@@ -436,36 +434,16 @@ const PACKS = [
     summary: it => `${frac(it.frac)} = ${esc(it.dec)} = ${esc(it.pct)}`,
   },
   {
-    id: 'squares',
-    name: 'Squares, cubes & roots',
-    blurb: 'Square numbers to 15², cubes and their roots.',
-    example: `7<sup>2</sup> = 49 &nbsp; √81 = 9`,
-    reps: { base: { label: 'number' }, val: { label: 'answer' } },
-    families: [
-      { id: 'sq10', name: 'Squares to 10²', on: true },
-      { id: 'sq15', name: 'Squares 11² to 15²' },
-      { id: 'cubes', name: 'Cubes', note: '1³ to 5³, 10³' },
-    ],
-    directions: [
-      { id: 'up', label: 'Square or cube it', from: 'base', to: 'val', on: true,
-        ask: it => it.pow === 3 ? 'Cube it' : 'Square it',
-        prompt: it => `${esc(it.base)}<sup>${it.pow}</sup>` },
-      { id: 'down', label: 'Find the root', from: 'val', to: 'base', on: true,
-        ask: it => it.pow === 3 ? 'Find the cube root' : 'Find the square root',
-        prompt: it => `${it.pow === 3 ? '∛' : '√'}${esc(it.val)}` },
-    ],
-    items: SQ_ITEMS,
-    summary: it => `${esc(it.base)}<sup>${it.pow}</sup> = ${esc(it.val)}`,
-  },
-  {
     id: 'bonds',
     name: 'Number bonds',
-    blurb: 'Pairs that make 100, and decimal pairs that make 1.',
+    blurb: 'Pairs that make 10, 20 and 100, and decimal pairs that make 1.',
     example: `65 + <span class="gap">35</span> = 100`,
     reps: { a: { label: 'number' }, b: { label: 'missing number' } },
     families: [
-      { id: 'tens', name: 'Tens to 100', note: '30 + 70', on: true },
-      { id: 'fives', name: 'Fives to 100', note: '45 + 55', on: true },
+      { id: 'to10', name: 'Pairs to 10', note: '3 + 7', on: true },
+      { id: 'to20', name: 'Pairs to 20', note: '13 + 7' },
+      { id: 'tens', name: 'Tens to 100', note: '30 + 70' },
+      { id: 'fives', name: 'Fives to 100', note: '45 + 55' },
       { id: 'any', name: 'Any pair to 100', note: '37 + 63' },
       { id: 'dec1', name: 'Tenths to 1', note: '0.3 + 0.7' },
       { id: 'dec2', name: 'Hundredths to 1', note: '0.35 + 0.65' },
