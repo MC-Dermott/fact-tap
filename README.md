@@ -6,6 +6,15 @@ or no timer).
 
 Open `index.html` in any browser. It's a single file, so there's no install or server.
 
+## Sharing with students
+
+- **Streamlit** (works on the school network): `streamlit_app.py` loads `index.html` into a
+  Streamlit page. It is deployed on Streamlit Community Cloud from this repo, with
+  `streamlit_app.py` as the main file. Run it locally with `streamlit run streamlit_app.py`.
+- **GitHub Pages**: https://mc-dermott.github.io/fact-tap/ (blocked on some school networks).
+
+Both use the same `index.html`, so a single push updates both.
+
 ## What's in it
 
 - **Fractions, decimals & percentages**: halves and quarters, tenths, fifths, hundredths, eighths,
